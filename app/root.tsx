@@ -1,19 +1,21 @@
-import type { LinksFunction } from "@remix-run/node";
+import type { LinksFunction, LoaderFunctionArgs } from "@remix-run/node";
 
 import {
   Form,
   Links,
+  NavLink,
   Meta,
   Scripts,
   ScrollRestoration,
   Outlet,
   Link,
   useLoaderData,
+  useNavigation,
 } from "@remix-run/react";
 
 import appStylesHref from "./app.css?url";
 
-import { json } from "@remix-run/node";
+import { json, redirect } from "@remix-run/node";
 
 // existing contacts
 import { getContacts } from "./data";
@@ -22,7 +24,7 @@ import { createEmptyContact, getContacts } from "./data";
 
 export const action = async () => {
   const contact = await createEmptyContact();
-  return json({ contact });
+  return redirect(`/contacts/${contact.id}/edit`);
 };
 
 export const links: LinksFunction = () => [
@@ -30,13 +32,17 @@ export const links: LinksFunction = () => [
 ];
 
 // add loader
-export const loader = async () => {
-  const contacts = await getContacts();
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const url = new URL(request.url);
+  const q = url.searchParams.get("q");
+  const contacts = await getContacts(q);
   return json({ contacts });
 };
 
 export default function App() {
   const { contacts } = useLoaderData<typeof loader>();
+  const navigation = useNavigation();
+
   return (
     <html lang="en">
       <head>
@@ -68,16 +74,23 @@ export default function App() {
               <ul>
                 {contacts.map((contact) => (
                   <li key={contact.id}>
-                    <Link to={`contacts/${contact.id}`}>
-                      {contact.first || contact.last ? (
-                        <>
-                          {contact.first} {contact.last}
-                        </>
-                      ) : (
-                        <i>No Name</i>
-                      )}{" "}
-                      {contact.favorite ? <span>★</span> : null}
-                    </Link>
+                    <NavLink
+                      className={({ isActive, isPending }) =>
+                        isActive ? "active" : isPending ? "pending" : ""
+                      }
+                      to={`contacts/${contact.id}`}
+                    >
+                      <Link to={`contacts/${contact.id}`}>
+                        {contact.first || contact.last ? (
+                          <>
+                            {contact.first} {contact.last}
+                          </>
+                        ) : (
+                          <i>No Name</i>
+                        )}{" "}
+                        {contact.favorite ? <span>★</span> : null}
+                      </Link>
+                    </NavLink>
                   </li>
                 ))}
               </ul>
@@ -88,7 +101,10 @@ export default function App() {
             )}
           </nav>
         </div>
-        <div id="detail">
+        <div
+          className={navigation.state === "loading" ? "loading" : ""}
+          id="detail"
+        >
           <Outlet />
         </div>
 
