@@ -6,6 +6,7 @@ import {
   Meta,
   Scripts,
   ScrollRestoration,
+  Outlet,
 } from "@remix-run/react";
 
 import appStylesHref from "./app.css?url";
@@ -51,6 +52,9 @@ export default function App() {
               </li>
             </ul>
           </nav>
+        </div>
+        <div id="detail">
+          <Outlet />
         </div>
 
         <ScrollRestoration />
