@@ -18,6 +18,13 @@ import { json } from "@remix-run/node";
 // existing contacts
 import { getContacts } from "./data";
 
+import { createEmptyContact, getContacts } from "./data";
+
+export const action = async () => {
+  const contact = await createEmptyContact();
+  return json({ contact });
+};
+
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: appStylesHref },
 ];
